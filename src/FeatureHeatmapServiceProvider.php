@@ -57,6 +57,11 @@ class FeatureHeatmapServiceProvider extends ServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
+            $argv = $_SERVER['argv'] ?? [];
+            if (in_array('package:discover', $argv, true)) {
+                Console\Installer::printBanner();
+            }
+
             $this->commands([
                 AggregateFeatureUsage::class,
                 Console\Commands\InstallCommand::class,
