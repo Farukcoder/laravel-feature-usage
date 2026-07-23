@@ -20,5 +20,13 @@
             ]
         }
     },
+    "scripts": {
+        "post-autoload-dump": [
+            "Farukcoder\\FeatureHeatmap\\Console\\Installer::postAutoloadDump"
+        ],
+        "post-install-cmd": [
+            "Farukcoder\\FeatureHeatmap\\Console\\Installer::postInstall"
+        ]
+    },
     "minimum-stability": "stable"
 }

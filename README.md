@@ -48,6 +48,20 @@ The package focuses on **code-level feature adoption** — identifying exactly w
 composer require farukcoder/laravel-feature-heatmap
 ```
 
+### 🖥️ CLI Output on Installation
+
+```
+  ███████╗ █████╗ ██████╗ ██╗  ██╗██╗  ██╗  ██████╗  ██████╗ ██████╗ ███████╗██████╗ 
+  ██╔════╝██╔══██╗██╔══██╗██║  ██║██║ ██╔╝ ██╔════╝ ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
+  █████╗  ███████║██████╔╝██║  ██║█████╔╝  ██║      ██║   ██║██║  ██║█████╗  ██████╔╝
+  ██╔══╝  ██╔══██╗██╔══██╗██║  ██║██╔═██╗  ██║      ██║   ██║██║  ██║██╔══╝  ██╔══██╗
+  ██║     ██║  ██║██║  ██║╚██████╔╝██║  ██╗ ╚██████╗ ╚██████╔╝██████╔╝███████╗██║  ██║
+  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝  ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
+
+        Laravel Feature Heatmap — Route & Feature Usage Tracker
+                  by Farukcoder | github.com/farukcoder
+```
+
 > **Note:** The package auto-discovers the service provider and middleware. No manual provider registration is needed for Laravel 10+.
 
 ### Publish Configuration (Optional)

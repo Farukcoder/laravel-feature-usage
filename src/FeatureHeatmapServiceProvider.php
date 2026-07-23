@@ -59,6 +59,8 @@ class FeatureHeatmapServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 AggregateFeatureUsage::class,
+                Console\Commands\InstallCommand::class,
+                Console\Commands\ShowBanner::class,
             ]);
         }
     }
