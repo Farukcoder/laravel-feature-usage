@@ -39,6 +39,10 @@ class Installer
 
 ASCII;
 
-        echo $banner . PHP_EOL;
+        if (defined('STDOUT') && is_resource(STDOUT)) {
+            fwrite(STDOUT, $banner . PHP_EOL);
+        } else {
+            echo $banner . PHP_EOL;
+        }
     }
 }
