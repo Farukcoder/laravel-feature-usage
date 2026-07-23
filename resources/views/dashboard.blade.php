@@ -485,6 +485,17 @@
             setupCellTooltips(container);
         }
 
+        // Global HTML escaper to prevent DOM XSS
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // Setup Floating tooltip box
         function setupCellTooltips(container) {
             const cells = container.querySelectorAll('td.cell-value');
@@ -498,10 +509,10 @@
                     const col = cell.getAttribute('data-col');
 
                     tooltip.innerHTML = `
-                        <div class="font-semibold text-slate-200 border-b border-slate-800 pb-1.5 mb-1.5 tracking-tight font-mono text-[11px] truncate max-w-[320px]">${row}</div>
+                        <div class="font-semibold text-slate-200 border-b border-slate-800 pb-1.5 mb-1.5 tracking-tight font-mono text-[11px] truncate max-w-[320px]">${escapeHtml(row)}</div>
                         <div class="space-y-1 text-[11px]">
-                            <div class="flex justify-between gap-6"><span class="text-slate-400">Dimension Key:</span><span class="font-mono text-brand-400">${col}</span></div>
-                            <div class="flex justify-between gap-6"><span class="text-slate-400">Total Usage:</span><span class="font-mono font-bold text-white">${val}</span></div>
+                            <div class="flex justify-between gap-6"><span class="text-slate-400">Dimension Key:</span><span class="font-mono text-brand-400">${escapeHtml(col)}</span></div>
+                            <div class="flex justify-between gap-6"><span class="text-slate-400">Total Usage:</span><span class="font-mono font-bold text-white">${escapeHtml(val)}</span></div>
                             <div class="flex justify-between items-center gap-6 pt-1.5"><span class="text-slate-400">Status:</span><span>${getHeatLevelBadge(val, max)}</span></div>
                         </div>
                     `;
@@ -812,12 +823,14 @@
                 return;
             }
 
-            container.innerHTML = unusedFeatures.map(f => `
+            container.innerHTML = unusedFeatures.map(f => {
+                const actionEscaped = escapeHtml(f.controller_action);
+                return `
                 <div class="flex justify-between items-center bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 hover:border-red-400 dark:hover:border-red-950 transition-all font-mono text-xs">
-                    <span class="truncate text-slate-800 dark:text-slate-300 font-medium mr-4" title="${f.controller_action}">${f.controller_action}</span>
+                    <span class="truncate text-slate-800 dark:text-slate-300 font-medium mr-4" title="${actionEscaped}">${actionEscaped}</span>
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900">DEAD</span>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // Theme Toggle Handler
@@ -893,7 +906,7 @@
                 })
                 .catch(err => {
                     document.getElementById('users-tbody').innerHTML =
-                        `<tr><td colspan="6" class="text-center py-10 font-mono text-xs text-red-400"><i class="fa-solid fa-circle-exclamation mr-1"></i> Failed to load users: ${err.message}</td></tr>`;
+                        `<tr><td colspan="6" class="text-center py-10 font-mono text-xs text-red-400"><i class="fa-solid fa-circle-exclamation mr-1"></i> Failed to load users: ${escapeHtml(err.message)}</td></tr>`;
                 });
         }
 
@@ -913,17 +926,19 @@
             });
 
             tbody.innerHTML = rows.map(u => {
-                const initial  = (u.user_name || u.user_email || '#').charAt(0).toUpperCase();
-                const name     = u.user_name  || `User #${u.user_id}`;
-                const email    = u.user_email || '—';
-                const lastSeen = u.last_seen ? u.last_seen.substring(0, 16).replace('T', ' ') : '—';
+                const rawName  = u.user_name  || `User #${u.user_id}`;
+                const rawEmail = u.user_email || '—';
+                const initial  = escapeHtml((rawName || rawEmail || '#').charAt(0).toUpperCase());
+                const name     = escapeHtml(rawName);
+                const email    = escapeHtml(rawEmail);
+                const lastSeen = escapeHtml(u.last_seen ? u.last_seen.substring(0, 16).replace('T', ' ') : '—');
                 const avatarColors = ['#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6'];
                 const avatarColor  = avatarColors[u.user_id % avatarColors.length];
 
                 return `
                 <tr class="users-row border-t border-slate-100 dark:border-slate-800 hover:bg-brand-50/40 dark:hover:bg-brand-950/10 transition-colors cursor-pointer group"
                     data-user-id="${u.user_id}"
-                    data-search="${(name + ' ' + email).toLowerCase()}"
+                    data-search="${escapeHtml((rawName + ' ' + rawEmail).toLowerCase())}"
                     onclick="openUserDetailById(${u.user_id})">
 
                     <td class="px-6 py-3">

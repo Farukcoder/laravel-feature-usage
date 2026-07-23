@@ -28,7 +28,8 @@ class TrackFeatureUsage
         $uri = $request->path();
 
         foreach (config('feature-heatmap.excluded_patterns', []) as $pattern) {
-            if (preg_match('#'.$pattern.'#i', $uri)) {
+            $safePattern = '#'.str_replace('#', '\#', $pattern).'#i';
+            if (@preg_match($safePattern, $uri)) {
                 return;
             }
         }

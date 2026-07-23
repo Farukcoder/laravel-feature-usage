@@ -5,18 +5,54 @@ namespace Farukcoder\FeatureHeatmap\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Farukcoder\FeatureHeatmap\Models\FeatureUsageSummary;
 use Farukcoder\FeatureHeatmap\Models\FeatureUsageLog;
+use DateTime;
 
 class FeatureHeatmapController extends Controller
 {
+    /**
+     * Check authorization gate if configured and defined.
+     */
+    protected function authorizeAccess(): void
+    {
+        $gate = config('feature-heatmap.authorization_gate');
+        if ($gate && Gate::has($gate)) {
+            Gate::authorize($gate);
+        }
+    }
+
+    /**
+     * Helper to safely sanitize date inputs (format: Y-m-d).
+     */
+    protected function sanitizeDate(?string $date, string $default): string
+    {
+        if (! $date) {
+            return $default;
+        }
+
+        $d = DateTime::createFromFormat('Y-m-d', $date);
+        return ($d && $d->format('Y-m-d') === $date) ? $date : $default;
+    }
+
+    /**
+     * Helper to sanitize SQL column names to prevent raw SQL injection.
+     */
+    protected function sanitizeColumn(string $column, string $default): string
+    {
+        return preg_match('/^[a-zA-Z0-9_]+$/', $column) ? $column : $default;
+    }
+
     /**
      * Render the main dashboard view.
      */
     public function index(Request $request)
     {
-        $from = $request->get('from', now()->subDays(30)->toDateString());
-        $to   = $request->get('to', now()->toDateString());
+        $this->authorizeAccess();
+
+        $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
+        $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
 
         return view('feature-heatmap::dashboard', [
             'from' => $from,
@@ -29,8 +65,10 @@ class FeatureHeatmapController extends Controller
      */
     public function data(Request $request)
     {
-        $from = $request->get('from', now()->subDays(30)->toDateString());
-        $to   = $request->get('to', now()->toDateString());
+        $this->authorizeAccess();
+
+        $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
+        $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
 
         $byFeatureAndDate = FeatureUsageSummary::heatmapByFeatureAndDate($from, $to);
         $byFeatureAndUser = FeatureUsageSummary::heatmapByFeatureAndUser($from, $to);
@@ -66,13 +104,15 @@ class FeatureHeatmapController extends Controller
      */
     public function userIndex(Request $request)
     {
-        $from = $request->get('from', now()->subDays(30)->toDateString());
-        $to   = $request->get('to', now()->toDateString());
+        $this->authorizeAccess();
 
-        $nameCol  = config('feature-heatmap.user_name_column', 'name');
-        $emailCol = config('feature-heatmap.user_email_column', 'email');
+        $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
+        $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
 
-        $userModel = config('auth.providers.users.model', \App\Models\User::class);
+        $nameCol  = $this->sanitizeColumn(config('feature-heatmap.user_name_column', 'name'), 'name');
+        $emailCol = $this->sanitizeColumn(config('feature-heatmap.user_email_column', 'email'), 'email');
+
+        $userModel  = config('auth.providers.users.model', \App\Models\User::class);
         $usersTable = (new $userModel)->getTable();
 
         $rows = FeatureUsageLog::query()
@@ -104,11 +144,14 @@ class FeatureHeatmapController extends Controller
      */
     public function userDetail(Request $request, $userId)
     {
-        $from = $request->get('from', now()->subDays(30)->toDateString());
-        $to   = $request->get('to', now()->toDateString());
+        $this->authorizeAccess();
 
-        $nameCol  = config('feature-heatmap.user_name_column', 'name');
-        $emailCol = config('feature-heatmap.user_email_column', 'email');
+        $userId = (int) $userId;
+        $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
+        $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
+
+        $nameCol  = $this->sanitizeColumn(config('feature-heatmap.user_name_column', 'name'), 'name');
+        $emailCol = $this->sanitizeColumn(config('feature-heatmap.user_email_column', 'email'), 'email');
 
         $userModel  = config('auth.providers.users.model', \App\Models\User::class);
         $usersTable = (new $userModel)->getTable();
@@ -149,11 +192,14 @@ class FeatureHeatmapController extends Controller
      */
     public function userReport(Request $request, $userId)
     {
-        $from = $request->get('from', now()->subDays(30)->toDateString());
-        $to   = $request->get('to', now()->toDateString());
+        $this->authorizeAccess();
 
-        $nameCol  = config('feature-heatmap.user_name_column', 'name');
-        $emailCol = config('feature-heatmap.user_email_column', 'email');
+        $userId = (int) $userId;
+        $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
+        $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
+
+        $nameCol  = $this->sanitizeColumn(config('feature-heatmap.user_name_column', 'name'), 'name');
+        $emailCol = $this->sanitizeColumn(config('feature-heatmap.user_email_column', 'email'), 'email');
 
         $userModel  = config('auth.providers.users.model', \App\Models\User::class);
         $usersTable = (new $userModel)->getTable();
@@ -174,7 +220,8 @@ class FeatureHeatmapController extends Controller
             ->orderByDesc('total')
             ->get();
 
-        $filename = 'heatmap-report-'.str_replace(' ', '-', strtolower($userName)).'-'.now()->format('Ymd').'.csv';
+        $safeFileNameUser = preg_replace('/[^a-zA-Z0-9_\-]/', '-', strtolower($userName));
+        $filename = 'heatmap-report-'.$safeFileNameUser.'-'.now()->format('Ymd').'.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
@@ -216,3 +263,4 @@ class FeatureHeatmapController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 }
+
