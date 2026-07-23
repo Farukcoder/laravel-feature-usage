@@ -1,0 +1,24 @@
+{
+    "name": "farukcoder/laravel-feature-heatmap",
+    "description": "Track which controllers/routes/features are used by which users, and visualize it as a heatmap.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/database": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Farukcoder\\FeatureHeatmap\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Farukcoder\\FeatureHeatmap\\FeatureHeatmapServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable"
+}
