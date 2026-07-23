@@ -20,4 +20,8 @@ Route::prefix(config('feature-heatmap.route_prefix', 'feature-heatmap'))
 
         // User-wise tracking: CSV report download for a single user
         Route::get('/users/{userId}/report', [FeatureHeatmapController::class, 'userReport'])->name('feature-heatmap.user-report');
+
+        // Package authentication routes
+        Route::post('/login', [FeatureHeatmapController::class, 'login'])->name('feature-heatmap.login');
+        Route::post('/logout', [FeatureHeatmapController::class, 'logout'])->name('feature-heatmap.logout');
     });

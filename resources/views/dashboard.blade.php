@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Feature Heatmap Sentinel</title>
+    <script>
+        window.SENTINEL_AUTH_ENABLED = @json($authEnabled ?? false);
+        window.SENTINEL_IS_AUTHENTICATED = @json($isAuthenticated ?? true);
+    </script>
     
     <!-- Google Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,6 +96,12 @@
             </div>
             
             <div class="flex items-center gap-3 self-stretch sm:self-auto justify-between">
+                @if($authEnabled ?? false)
+                <button id="sentinel-logout-btn" onclick="performSentinelLogout()" class="{{ ($isAuthenticated ?? false) ? 'flex' : 'hidden' }} h-9 px-3 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 items-center gap-1.5 text-xs font-medium font-mono transition-all" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+                @endif
                 <button onclick="toggleTheme()" class="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-all">
                     <i class="fa-solid fa-sun hidden dark:inline-block text-sm"></i>
                     <i class="fa-solid fa-moon inline-block dark:hidden text-sm"></i>
@@ -849,8 +860,21 @@
             }
         }
 
+        function showSentinelLoginModal() {
+            const modal = document.getElementById('sentinel-login-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
         // Load all data
         function loadData() {
+            if (window.SENTINEL_AUTH_ENABLED && !window.SENTINEL_IS_AUTHENTICATED) {
+                showSentinelLoginModal();
+                return;
+            }
+
             const from = document.getElementById('from').value;
             const to = document.getElementById('to').value;
             const spinner = document.getElementById('loading-spinner');
@@ -858,7 +882,14 @@
             spinner.classList.add('opacity-100', 'pointer-events-auto');
 
             fetch(`{{ route('feature-heatmap.data') }}?from=${from}&to=${to}`)
-                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 401) {
+                        window.SENTINEL_IS_AUTHENTICATED = false;
+                        showSentinelLoginModal();
+                        throw new Error('Unauthenticated');
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     globalData = data;
                     
@@ -870,9 +901,12 @@
                     renderUnusedFeatures(data.unused_features);
                     
                     filterHeatmap();
+                    updateLastUpdatedTime();
                 })
                 .catch(err => {
-                    console.error('Heatmap sentinel fetching failure:', err);
+                    if (err.message !== 'Unauthenticated') {
+                        console.error('Heatmap sentinel fetching failure:', err);
+                    }
                 })
                 .finally(() => {
                     spinner.classList.remove('opacity-100', 'pointer-events-auto');
@@ -895,11 +929,23 @@
 
         /** Fetch /users and render the users table */
         function loadUsersTable() {
+            if (window.SENTINEL_AUTH_ENABLED && !window.SENTINEL_IS_AUTHENTICATED) {
+                showSentinelLoginModal();
+                return;
+            }
+
             const from = document.getElementById('from').value;
             const to   = document.getElementById('to').value;
 
             fetch(`{{ route('feature-heatmap.users') }}?from=${from}&to=${to}`)
-                .then(r => r.json())
+                .then(r => {
+                    if (r.status === 401) {
+                        window.SENTINEL_IS_AUTHENTICATED = false;
+                        showSentinelLoginModal();
+                        throw new Error('Unauthenticated');
+                    }
+                    return r.json();
+                })
                 .then(rows => {
                     renderUsersTable(rows);
                     usersLoaded = true;
@@ -1110,9 +1156,114 @@
             if (e.key === 'Escape') closeUserPanel();
         });
 
+        function handleSentinelLoginSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('sentinel-login-btn');
+            const errBox = document.getElementById('sentinel-login-error');
+            const errText = document.getElementById('sentinel-login-error-text');
+            const username = document.getElementById('sentinel-username').value;
+            const password = document.getElementById('sentinel-password').value;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Authenticating...`;
+            errBox.classList.add('hidden');
+
+            fetch(`{{ route('feature-heatmap.login') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, data })))
+            .then(res => {
+                if (res.status === 200 && res.data.success) {
+                    const modal = document.getElementById('sentinel-login-modal');
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    const logoutBtn = document.getElementById('sentinel-logout-btn');
+                    if (logoutBtn) { logoutBtn.classList.remove('hidden'); logoutBtn.classList.add('flex'); }
+                    window.SENTINEL_IS_AUTHENTICATED = true;
+                    loadData();
+                } else {
+                    errText.innerText = res.data.message || 'Invalid username or password';
+                    errBox.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                errText.innerText = 'Authentication error. Please try again.';
+                errBox.classList.remove('hidden');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Unlock Dashboard</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+            });
+        }
+
+        function performSentinelLogout() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            fetch(`{{ route('feature-heatmap.logout') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            }).finally(() => {
+                window.location.reload();
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
         });
     </script>
+
+    <!-- ═══════════ AUTHENTICATION MODAL ═══════════ -->
+    <div id="sentinel-login-modal" class="{{ (($authEnabled ?? false) && !($isAuthenticated ?? true)) ? 'flex' : 'hidden' }} fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] justify-center items-center p-4 transition-all duration-300">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-8 relative overflow-hidden">
+            <!-- Decorative ambient glow -->
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="h-14 w-14 rounded-2xl bg-brand-600 flex items-center justify-center text-white text-xl shadow-xl shadow-brand-500/30 mb-4">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Feature Sentinel Auth</h2>
+                <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">Enter credentials to unlock dashboard metrics</p>
+            </div>
+
+            <div id="sentinel-login-error" class="hidden mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                <span id="sentinel-login-error-text">Invalid credentials</span>
+            </div>
+
+            <form onsubmit="handleSentinelLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-mono font-medium text-slate-500 dark:text-slate-400 uppercase mb-1.5">Username</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="sentinel-username" required placeholder="Enter username" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-mono font-medium text-slate-500 dark:text-slate-400 uppercase mb-1.5">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="password" id="sentinel-password" required placeholder="Enter password" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-mono">
+                    </div>
+                </div>
+
+                <button type="submit" id="sentinel-login-btn" class="w-full py-3 px-4 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 active:scale-[0.98] rounded-xl shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2 mt-2">
+                    <span>Unlock Dashboard</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

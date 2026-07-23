@@ -188,8 +188,13 @@ Add these to your `.env` file to customize behavior:
 ```env
 FEATURE_HEATMAP_ENABLED=true
 FEATURE_HEATMAP_AUTO_TRACK=true
-FEATURE_HEATMAP_USE_QUEUE=true
+FEATURE_HEATMAP_USE_QUEUE=false
 FEATURE_HEATMAP_QUEUE=default
+
+# Dashboard Login Authentication (Login Modal)
+FEATURE_HEATMAP_AUTH_ENABLED=true
+FEATURE_HEATMAP_USERNAME=admin
+FEATURE_HEATMAP_PASSWORD=your_secure_password
 ```
 
 ---

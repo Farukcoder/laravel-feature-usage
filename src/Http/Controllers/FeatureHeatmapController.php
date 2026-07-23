@@ -45,6 +45,18 @@ class FeatureHeatmapController extends Controller
     }
 
     /**
+     * Check if package internal authentication is satisfied.
+     */
+    protected function isAuthenticated(Request $request): bool
+    {
+        if (! config('feature-heatmap.auth_enabled', false)) {
+            return true;
+        }
+
+        return (bool) $request->session()->get('feature_heatmap_auth', false);
+    }
+
+    /**
      * Render the main dashboard view.
      */
     public function index(Request $request)
@@ -54,9 +66,14 @@ class FeatureHeatmapController extends Controller
         $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
         $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
 
+        $authEnabled     = (bool) config('feature-heatmap.auth_enabled', false);
+        $isAuthenticated = $this->isAuthenticated($request);
+
         return view('feature-heatmap::dashboard', [
-            'from' => $from,
-            'to'   => $to,
+            'from'            => $from,
+            'to'              => $to,
+            'authEnabled'     => $authEnabled,
+            'isAuthenticated' => $isAuthenticated,
         ]);
     }
 
@@ -66,6 +83,10 @@ class FeatureHeatmapController extends Controller
     public function data(Request $request)
     {
         $this->authorizeAccess();
+
+        if (! $this->isAuthenticated($request)) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
         $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
@@ -106,6 +127,10 @@ class FeatureHeatmapController extends Controller
     {
         $this->authorizeAccess();
 
+        if (! $this->isAuthenticated($request)) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
         $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
         $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
 
@@ -145,6 +170,10 @@ class FeatureHeatmapController extends Controller
     public function userDetail(Request $request, $userId)
     {
         $this->authorizeAccess();
+
+        if (! $this->isAuthenticated($request)) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $userId = (int) $userId;
         $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
@@ -193,6 +222,10 @@ class FeatureHeatmapController extends Controller
     public function userReport(Request $request, $userId)
     {
         $this->authorizeAccess();
+
+        if (! $this->isAuthenticated($request)) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $userId = (int) $userId;
         $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
@@ -261,6 +294,38 @@ class FeatureHeatmapController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Authenticate dashboard user via env configured username and password.
+     */
+    public function login(Request $request)
+    {
+        if (! config('feature-heatmap.auth_enabled', false)) {
+            return response()->json(['success' => true, 'message' => 'Auth is disabled']);
+        }
+
+        $username = $request->input('username');
+        $password = $request->input('password');
+
+        $validUser = config('feature-heatmap.username', 'admin');
+        $validPass = config('feature-heatmap.password', 'secret');
+
+        if ($username === $validUser && $password === $validPass) {
+            $request->session()->put('feature_heatmap_auth', true);
+            return response()->json(['success' => true, 'message' => 'Authenticated successfully']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid username or password'], 401);
+    }
+
+    /**
+     * Logout dashboard user.
+     */
+    public function logout(Request $request)
+    {
+        $request->session()->forget('feature_heatmap_auth');
+        return response()->json(['success' => true, 'message' => 'Logged out successfully']);
     }
 }
 

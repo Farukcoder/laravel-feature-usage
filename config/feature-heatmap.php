@@ -37,6 +37,11 @@ return [
     // Define it in AuthServiceProvider: Gate::define('viewFeatureHeatmap', ...)
     'authorization_gate' => 'viewFeatureHeatmap',
 
+    // Package internal authentication settings (login modal via env credentials)
+    'auth_enabled' => env('FEATURE_HEATMAP_AUTH_ENABLED', false),
+    'username'     => env('FEATURE_HEATMAP_USERNAME', 'admin'),
+    'password'     => env('FEATURE_HEATMAP_PASSWORD', 'secret'),
+
     // Auth user model columns used to display user identity in the Users tab
     'user_name_column'  => env('FEATURE_HEATMAP_USER_NAME_COL', 'name'),
     'user_email_column' => env('FEATURE_HEATMAP_USER_EMAIL_COL', 'email'),
