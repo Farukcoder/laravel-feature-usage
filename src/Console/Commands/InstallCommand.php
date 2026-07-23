@@ -13,7 +13,7 @@ class InstallCommand extends Command
 
     public function handle(): int
     {
-        Installer::printBanner();
+        Installer::printBanner(true);
 
         $this->info('Publishing Laravel Feature Heatmap configuration...');
 

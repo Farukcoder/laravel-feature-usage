@@ -13,7 +13,7 @@ class ShowBanner extends Command
 
     public function handle(): int
     {
-        Installer::printBanner();
+        Installer::printBanner(true);
 
         return self::SUCCESS;
     }

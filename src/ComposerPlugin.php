@@ -32,16 +32,10 @@ class ComposerPlugin implements PluginInterface, EventSubscriberInterface
     {
         return [
             PackageEvents::POST_PACKAGE_INSTALL => 'onPostPackageInstall',
-            ScriptEvents::POST_AUTOLOAD_DUMP     => 'onPostAutoloadDump',
         ];
     }
 
     public function onPostPackageInstall(): void
-    {
-        Installer::printBanner();
-    }
-
-    public function onPostAutoloadDump(): void
     {
         Installer::printBanner();
     }

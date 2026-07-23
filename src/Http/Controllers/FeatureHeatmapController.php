@@ -45,11 +45,36 @@ class FeatureHeatmapController extends Controller
     }
 
     /**
+     * Check if package authentication is enabled (via config or env).
+     */
+    protected function isAuthEnabled(): bool
+    {
+        // 1. Check config if set
+        $configVal = config('feature-heatmap.auth_enabled');
+        if ($configVal !== null && $configVal !== false) {
+            return true;
+        }
+
+        // 2. Check direct .env variables (if config was not published or returned false/null)
+        $envAuth = env('FEATURE_HEATMAP_AUTH_ENABLED');
+        if ($envAuth !== null) {
+            return filter_var($envAuth, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        // 3. Auto-enable if FEATURE_HEATMAP_USERNAME or FEATURE_HEATMAP_PASSWORD is set in .env
+        if (env('FEATURE_HEATMAP_USERNAME') !== null || env('FEATURE_HEATMAP_PASSWORD') !== null) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if package internal authentication is satisfied.
      */
     protected function isAuthenticated(Request $request): bool
     {
-        if (! config('feature-heatmap.auth_enabled', false)) {
+        if (! $this->isAuthEnabled()) {
             return true;
         }
 
@@ -66,7 +91,7 @@ class FeatureHeatmapController extends Controller
         $from = $this->sanitizeDate($request->get('from'), now()->subDays(30)->toDateString());
         $to   = $this->sanitizeDate($request->get('to'), now()->toDateString());
 
-        $authEnabled     = (bool) config('feature-heatmap.auth_enabled', false);
+        $authEnabled     = $this->isAuthEnabled();
         $isAuthenticated = $this->isAuthenticated($request);
 
         return view('feature-heatmap::dashboard', [
@@ -301,17 +326,17 @@ class FeatureHeatmapController extends Controller
      */
     public function login(Request $request)
     {
-        if (! config('feature-heatmap.auth_enabled', false)) {
+        if (! $this->isAuthEnabled()) {
             return response()->json(['success' => true, 'message' => 'Auth is disabled']);
         }
 
-        $username = $request->input('username');
-        $password = $request->input('password');
+        $username = (string) $request->input('username');
+        $password = (string) $request->input('password');
 
-        $validUser = config('feature-heatmap.username', 'admin');
-        $validPass = config('feature-heatmap.password', 'secret');
+        $validUser = config('feature-heatmap.username') ?? env('FEATURE_HEATMAP_USERNAME', 'admin');
+        $validPass = config('feature-heatmap.password') ?? env('FEATURE_HEATMAP_PASSWORD', 'secret');
 
-        if ($username === $validUser && $password === $validPass) {
+        if ($username === (string) $validUser && $password === (string) $validPass) {
             $request->session()->put('feature_heatmap_auth', true);
             return response()->json(['success' => true, 'message' => 'Authenticated successfully']);
         }

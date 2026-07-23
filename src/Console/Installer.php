@@ -4,6 +4,8 @@ namespace Farukcoder\FeatureHeatmap\Console;
 
 class Installer
 {
+    protected static bool $printed = false;
+
     public static function postAutoloadDump($event = null): void
     {
         static::printBanner();
@@ -14,11 +16,22 @@ class Installer
         static::printBanner();
     }
 
-    public static function printBanner(): void
+    public static function printBanner(bool $force = false): void
     {
         if (php_sapi_name() !== 'cli') {
             return;
         }
+
+        if (static::$printed && ! $force) {
+            return;
+        }
+
+        if (getenv('FEATURE_HEATMAP_BANNER_PRINTED') && ! $force) {
+            return;
+        }
+
+        static::$printed = true;
+        putenv('FEATURE_HEATMAP_BANNER_PRINTED=1');
 
         $boldCyan = "\033[1;36m";
         $green    = "\033[1;32m";
