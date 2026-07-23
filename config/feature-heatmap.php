@@ -31,14 +31,14 @@ return [
 
     // Route prefix and middleware for the dashboard
     'route_prefix' => 'feature-heatmap',
-    'route_middleware' => ['web', 'auth'],
+    'route_middleware' => ['web'],
 
     // Gate that controls who can view the dashboard
     // Define it in AuthServiceProvider: Gate::define('viewFeatureHeatmap', ...)
     'authorization_gate' => 'viewFeatureHeatmap',
 
     // Package internal authentication settings (login modal via env credentials)
-    'auth_enabled' => env('FEATURE_HEATMAP_AUTH_ENABLED', false),
+    'auth_enabled' => env('FEATURE_HEATMAP_AUTH_ENABLED', env('FEATURE_HEATMAP_USERNAME') !== null),
     'username'     => env('FEATURE_HEATMAP_USERNAME', 'admin'),
     'password'     => env('FEATURE_HEATMAP_PASSWORD', 'secret'),
 
