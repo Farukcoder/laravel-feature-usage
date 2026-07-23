@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Laravel Feature Heatmap tracks controller actions, routes, users, and feature adoption with a zero-setup dashboard." />
+  <title>Laravel Feature Heatmap — Feature Usage Analytics for Laravel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Laravel Feature Heatmap home">
+      <span class="brand-icon"><span></span><span></span><span></span></span>
+      <span><strong>Feature Heatmap</strong><small>Laravel usage analytics</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Primary navigation">
+      <a href="#features">Features</a><a href="#screenshots">Screenshots</a><a href="docs.html">Documentation</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-button theme-toggle" aria-label="Toggle theme"><span class="theme-icon">☾</span></button>
+      <a class="button button-ghost" href="https://github.com/Farukcoder/laravel-feature-usage">GitHub ↗</a>
+      <a class="button button-primary" href="docs.html#installation">Get started</a>
+    </div>
+    <button class="mobile-menu" aria-label="Open menu">☰</button>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span class="pulse"></span> Built for Laravel teams</div>
+        <h1>Know which features<br><span>your users actually use.</span></h1>
+        <p>Track controllers, routes, users, and feature adoption in your Laravel application—with a fast visual dashboard and zero manual route setup.</p>
+        <div class="hero-actions">
+          <a class="button button-primary button-large" href="docs.html#installation">Install in minutes <span>→</span></a>
+          <a class="button button-secondary button-large" href="https://github.com/Farukcoder/laravel-feature-usage">View source</a>
+        </div>
+        <div class="install-command copy-block" data-copy="composer require farukcoder/laravel-feature-heatmap">
+          <span class="prompt">$</span><code>composer require farukcoder/laravel-feature-heatmap</code><button aria-label="Copy command">Copy</button>
+        </div>
+        <div class="trust-row"><span>✓ Auto-discovery</span><span>✓ Laravel 10+</span><span>✓ MIT licensed</span></div>
+      </div>
+      <div class="hero-visual reveal delay-1">
+        <div class="browser-card">
+          <div class="browser-top"><i></i><i></i><i></i><span>your-app.test/feature-heatmap</span></div>
+          <picture><source srcset="images/activity-dark.jpg" media="(prefers-color-scheme: dark)"><img src="images/activity-light.jpg" alt="Feature Heatmap dashboard activity analytics" /></picture>
+        </div>
+        <div class="floating-stat stat-one"><strong>20</strong><span>Active features</span></div>
+        <div class="floating-stat stat-two"><strong>0</strong><span>Unused features</span></div>
+      </div>
+    </section>
+
+    <section class="logo-strip"><div class="container"><span>Tracks your application at code level</span><b>Controllers</b><b>Routes</b><b>Users</b><b>HTTP Methods</b><b>Activity</b></div></section>
+
+    <section class="section container" id="features">
+      <div class="section-heading centered reveal"><div class="eyebrow">Everything you need</div><h2>Feature analytics without the analytics project</h2><p>Install the package, run migrations, and get a clear picture of real application usage.</p></div>
+      <div class="feature-grid">
+        <article class="feature-card featured reveal"><div class="feature-icon">⌁</div><h3>Zero-setup tracking</h3><p>Automatically attaches tracking middleware to web and API route groups. No edits to your route files or HTTP kernel.</p><div class="mini-code"><span>FEATURE_HEATMAP_AUTO_TRACK=true</span></div></article>
+        <article class="feature-card reveal delay-1"><div class="feature-icon">▦</div><h3>Interactive heatmaps</h3><p>Compare feature usage by date and by authenticated user with an easy-to-scan matrix.</p></article>
+        <article class="feature-card reveal delay-2"><div class="feature-icon">◉</div><h3>User drill-down</h3><p>See total hits, distinct features, last activity, and detailed per-user usage breakdowns.</p></article>
+        <article class="feature-card reveal"><div class="feature-icon">↗</div><h3>CSV reports</h3><p>Export individual user activity reports directly from the dashboard.</p></article>
+        <article class="feature-card reveal delay-1"><div class="feature-icon">∅</div><h3>Unused feature discovery</h3><p>Find endpoints that have been dormant for 30+ days and remove technical debt with confidence.</p></article>
+        <article class="feature-card reveal delay-2"><div class="feature-icon">⚡</div><h3>Fast, queue-ready logging</h3><p>Dispatch tracking asynchronously, aggregate daily summaries, and prune raw logs to keep production responsive.</p></article>
+      </div>
+    </section>
+
+    <section class="section showcase" id="screenshots">
+      <div class="container">
+        <div class="section-heading reveal"><div class="eyebrow">A dashboard developers enjoy</div><h2>From a quick signal to a detailed answer</h2><p>Switch between heatmaps, activity charts, unused feature reports, and user tracking in one interface.</p></div>
+        <div class="showcase-tabs" role="tablist">
+          <button class="active" data-shot="images/heatmap-light.jpg" data-dark-shot="images/activity-dark.jpg" data-caption="Feature × timeline heatmap">Heatmaps</button>
+          <button data-shot="images/activity-light.jpg" data-dark-shot="images/activity-dark.jpg" data-caption="Activity analytics and usage distribution">Activity</button>
+          <button data-shot="images/unused-light.jpg" data-dark-shot="images/unused-light.jpg" data-caption="Unused feature discovery">Unused features</button>
+          <button data-shot="images/users-light.jpg" data-dark-shot="images/user-drawer-dark.jpg" data-caption="User-wise tracking and drill-down">Users</button>
+        </div>
+        <figure class="showcase-window reveal"><img id="showcase-image" src="images/heatmap-light.jpg" alt="Laravel Feature Heatmap screenshot"><figcaption id="showcase-caption">Feature × timeline heatmap</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="section container workflow">
+      <div class="section-heading centered reveal"><div class="eyebrow">Simple setup</div><h2>Three steps from install to insight</h2></div>
+      <div class="steps">
+        <article class="step reveal"><span>01</span><h3>Install</h3><code>composer require<br>farukcoder/laravel-feature-heatmap</code></article>
+        <div class="step-line"></div>
+        <article class="step reveal delay-1"><span>02</span><h3>Migrate</h3><code>php artisan migrate</code><p>Creates optimized raw log and daily summary tables.</p></article>
+        <div class="step-line"></div>
+        <article class="step reveal delay-2"><span>03</span><h3>Explore</h3><code>/feature-heatmap</code><p>Open the protected dashboard and start finding usage patterns.</p></article>
+      </div>
+    </section>
+
+    <section class="section container split-section">
+      <div class="split-copy reveal"><div class="eyebrow">Built for production</div><h2>Useful data, controlled overhead.</h2><p>Queue-backed logging keeps requests fast. Scheduled aggregation turns raw events into lightweight daily summaries, while pruning keeps tables lean.</p><ul class="check-list"><li>Configurable queue and retention</li><li>Excluded URI patterns</li><li>Protected dashboard route</li><li>Custom user name and email columns</li></ul><a class="text-link" href="docs.html#configuration">Explore configuration →</a></div>
+      <div class="terminal reveal delay-1"><div class="terminal-top"><span></span><span></span><span></span><b>routes/console.php</b></div><pre><code><em>use</em> Illuminate\Support\Facades\Schedule;
+
+Schedule::<strong>command</strong>(
+  <span>'feature-heatmap:aggregate --prune'</span>
+)-><strong>dailyAt</strong>(<span>'01:00'</span>);</code></pre></div>
+    </section>
+
+    <section class="cta-section"><div class="container cta-card reveal"><div><div class="eyebrow">Start measuring what matters</div><h2>Turn endpoint activity into product decisions.</h2><p>Get the package running in your Laravel application today.</p></div><div class="cta-actions"><a class="button button-primary button-large" href="docs.html#installation">Read documentation</a><a class="button button-secondary button-large" href="https://github.com/Farukcoder/laravel-feature-usage">Open GitHub ↗</a></div></div></section>
+  </main>
+
+  <footer><div class="container footer-inner"><a class="brand" href="index.html"><span class="brand-icon"><span></span><span></span><span></span></span><span><strong>Feature Heatmap</strong><small>by Farukcoder</small></span></a><p>Laravel feature usage tracking and heatmap dashboard.</p><div><a href="docs.html">Docs</a><a href="https://github.com/Farukcoder/laravel-feature-usage">GitHub</a><a href="https://packagist.org/packages/farukcoder/laravel-feature-heatmap">Packagist</a></div></div></footer>
+  <script src="script.js"></script>
+</body>
+</html>

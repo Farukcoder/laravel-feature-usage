@@ -1,0 +1,63 @@
+<!doctype html><html lang="en" data-theme="light"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Laravel Feature Heatmap documentation"><title>Documentation — Laravel Feature Heatmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head>
+<body class="docs-body">
+<header class="site-header docs-header"><a class="brand" href="index.html"><span class="brand-icon"><span></span><span></span><span></span></span><span><strong>Feature Heatmap</strong><small>Documentation</small></span></a><div class="docs-search"><span>⌕</span><input id="docs-search" type="search" placeholder="Search documentation..."><kbd>/</kbd></div><div class="header-actions"><button class="icon-button theme-toggle" aria-label="Toggle theme"><span class="theme-icon">☾</span></button><a class="button button-ghost" href="https://github.com/Farukcoder/laravel-feature-usage">GitHub ↗</a></div></header>
+<div class="docs-layout">
+<aside class="docs-sidebar"><nav>
+<p>Getting started</p><a href="#introduction" class="active">Introduction</a><a href="#requirements">Requirements</a><a href="#installation">Installation</a><a href="#dashboard">Dashboard</a>
+<p>Core usage</p><a href="#automatic-tracking">Automatic tracking</a><a href="#manual-mode">Manual mode</a><a href="#scheduler">Aggregation & pruning</a><a href="#user-tracking">User tracking & CSV</a>
+<p>Reference</p><a href="#configuration">Configuration</a><a href="#environment">Environment variables</a><a href="#authentication">Dashboard authentication</a><a href="#troubleshooting">Troubleshooting</a>
+</nav></aside>
+<main class="docs-content">
+<section id="introduction" data-searchable><div class="doc-badge">Documentation</div><h1>Laravel Feature Heatmap</h1><p class="lead">A zero-setup feature usage tracker and heatmap dashboard for Laravel. Understand which controller actions and routes are being used, by whom, and how often.</p><div class="callout info"><strong>What it records</strong><p>Controller/action, route name, HTTP method, URI, authenticated user identity, timestamps, and daily usage frequency.</p></div></section>
+<section id="requirements" data-searchable><h2>Requirements</h2><div class="requirements-grid"><div><strong>PHP</strong><span>8.2 or later</span></div><div><strong>Laravel</strong><span>10 or later</span></div><div><strong>Database</strong><span>Laravel-supported driver</span></div><div><strong>Optional</strong><span>Queue worker for async logging</span></div></div></section>
+<section id="installation" data-searchable><h2>Installation</h2><p>Install the package through Composer:</p><div class="code-block copy-block" data-copy="composer require farukcoder/laravel-feature-heatmap"><div class="code-label">Terminal</div><pre><code>composer require farukcoder/laravel-feature-heatmap</code></pre><button>Copy</button></div><p>The package uses Laravel package auto-discovery, so no manual service provider registration is required.</p><h3>Publish configuration <span class="optional">Optional</span></h3><div class="code-block copy-block" data-copy="php artisan vendor:publish --tag=feature-heatmap-config"><pre><code>php artisan vendor:publish --tag=feature-heatmap-config</code></pre><button>Copy</button></div><h3>Run migrations</h3><div class="code-block copy-block" data-copy="php artisan migrate"><pre><code>php artisan migrate</code></pre><button>Copy</button></div><p>This creates <code>feature_usage_logs</code> for raw request events and <code>feature_usage_summaries</code> for aggregated daily statistics.</p></section>
+<section id="dashboard" data-searchable><h2>Open the dashboard</h2><p>After installation and migration, visit:</p><div class="code-block"><pre><code>https://your-app.test/feature-heatmap</code></pre></div><img class="doc-image" src="images/heatmap-light.jpg" alt="Heatmap dashboard"><p>The interface includes heatmap matrices, activity analytics, unused feature discovery, and user tracking.</p></section>
+<section id="automatic-tracking" data-searchable><h2>Automatic global tracking</h2><p>Automatic tracking is enabled by default. The package attaches its middleware to Laravel's <code>web</code> and <code>api</code> route groups, so no changes are needed in <code>web.php</code>, <code>api.php</code>, or <code>Kernel.php</code>.</p><div class="callout success"><strong>Zero-route setup</strong><p>Once installed, normal application traffic begins producing usage data automatically.</p></div></section>
+<section id="manual-mode" data-searchable><h2>Manual middleware mode</h2><p>Disable automatic tracking when you only want selected routes included:</p><div class="code-block"><pre><code>FEATURE_HEATMAP_AUTO_TRACK=false</code></pre></div><p>Then apply the named middleware:</p><div class="code-block"><pre><code>Route::middleware(['web', 'auth', 'track.feature'])
+    ->group(function () {
+        Route::get('/orders', [OrderController::class, 'index']);
+    });</code></pre></div></section>
+<section id="scheduler" data-searchable><h2>Daily aggregation and pruning</h2><p>For production applications, schedule the aggregation command once per day. It summarizes raw events and can prune old records.</p><div class="tabs"><button class="active" data-code-tab="laravel11">Laravel 11+</button><button data-code-tab="laravel10">Laravel 10</button></div><div class="code-panel active" data-code-panel="laravel11"><div class="code-block"><div class="code-label">routes/console.php</div><pre><code>use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('feature-heatmap:aggregate --prune')
+    ->dailyAt('01:00');</code></pre></div></div><div class="code-panel" data-code-panel="laravel10"><div class="code-block"><div class="code-label">app/Console/Kernel.php</div><pre><code>protected function schedule(Schedule $schedule): void
+{
+    $schedule->command('feature-heatmap:aggregate --prune')
+        ->dailyAt('01:00');
+}</code></pre></div></div></section>
+<section id="user-tracking" data-searchable><h2>User tracking and CSV reports</h2><p>The Users Tracking tab lists active users, total hits, distinct features, and last seen time. Open a user to view a feature distribution and timeline heatmap, or download a CSV activity report.</p><img class="doc-image" src="images/user-drawer-light.jpg" alt="User activity drill-down panel"></section>
+<section id="configuration" data-searchable><h2>Configuration</h2><p>After publishing the configuration file, adjust tracking and dashboard behavior in <code>config/feature-heatmap.php</code>.</p><div class="code-block"><pre><code>return [
+    'enabled' => env('FEATURE_HEATMAP_ENABLED', true),
+    'auto_track' => env('FEATURE_HEATMAP_AUTO_TRACK', true),
+    'use_queue' => env('FEATURE_HEATMAP_USE_QUEUE', true),
+    'queue_name' => env('FEATURE_HEATMAP_QUEUE', 'default'),
+    'raw_log_retention_days' => 14,
+
+    'excluded_patterns' => [
+        '^_debugbar',
+        '^horizon',
+        '^telescope',
+        '^feature-heatmap',
+    ],
+
+    'route_prefix' => 'feature-heatmap',
+    'route_middleware' => ['web', 'auth'],
+    'user_name_column' => 'name',
+    'user_email_column' => 'email',
+];</code></pre></div><div class="config-table"><div><code>enabled</code><span>Turn all package tracking on or off.</span></div><div><code>auto_track</code><span>Attach middleware automatically to web and API routes.</span></div><div><code>use_queue</code><span>Write events asynchronously through Laravel queues.</span></div><div><code>raw_log_retention_days</code><span>Choose how long raw logs remain before pruning.</span></div><div><code>excluded_patterns</code><span>Regex patterns for routes that should never be tracked.</span></div><div><code>route_middleware</code><span>Middleware protecting the dashboard.</span></div></div></section>
+<section id="environment" data-searchable><h2>Environment variables</h2><div class="code-block"><pre><code>FEATURE_HEATMAP_ENABLED=true
+FEATURE_HEATMAP_AUTO_TRACK=true
+FEATURE_HEATMAP_USE_QUEUE=false
+FEATURE_HEATMAP_QUEUE=default
+
+FEATURE_HEATMAP_AUTH_ENABLED=true
+FEATURE_HEATMAP_USERNAME=admin
+FEATURE_HEATMAP_PASSWORD=your_secure_password</code></pre></div></section>
+<section id="authentication" data-searchable><h2>Dashboard authentication</h2><p>The package can display its own login screen for the metrics dashboard. Set a strong username and password in your environment and never commit real credentials to source control.</p><img class="doc-image compact" src="images/login.jpg" alt="Feature Heatmap dashboard login screen"><div class="callout warning"><strong>Production reminder</strong><p>Protect the dashboard behind HTTPS, application authentication, and authorization appropriate for your team.</p></div></section>
+<section id="troubleshooting" data-searchable><h2>Troubleshooting</h2><h3>No activity is appearing</h3><p>Confirm the package is enabled, automatic tracking is on, migrations ran successfully, and the current URI does not match an excluded pattern.</p><h3>Queued records are not saved</h3><p>Start a queue worker or temporarily set <code>FEATURE_HEATMAP_USE_QUEUE=false</code> to verify the rest of the integration.</p><h3>The dashboard returns 403 or redirects</h3><p>Review <code>route_middleware</code>, your application authentication state, and the package dashboard authentication environment variables.</p></section>
+<div class="docs-footer"><span>Laravel Feature Heatmap documentation</span><a href="https://github.com/Farukcoder/laravel-feature-usage">Edit on GitHub ↗</a></div>
+</main>
+<aside class="toc"><strong>On this page</strong><a href="#introduction">Introduction</a><a href="#requirements">Requirements</a><a href="#installation">Installation</a><a href="#dashboard">Dashboard</a><a href="#automatic-tracking">Automatic tracking</a><a href="#scheduler">Aggregation</a><a href="#configuration">Configuration</a></aside>
+</div><script src="script.js"></script></body></html>
